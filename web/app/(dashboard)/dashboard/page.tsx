@@ -1,14 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
+import { getRequestUserId } from "@/lib/auth-guest";
 import { getCounts } from "@/lib/db";
 
 export default async function DashboardPage() {
   let counts = { datasets: 0, stressRuns: 0, analyses: 0 };
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) counts = await getCounts(user.id);
+    const userId = await getRequestUserId();
+    counts = await getCounts(userId);
   } catch {
-    // no db or auth
+    // no db
   }
 
   return (

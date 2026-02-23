@@ -28,13 +28,26 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     fetch("/api/uploads?type=pdf")
-      .then((r) => r.json())
-      .then((data) => {
-        const list = Array.isArray(data) ? data : [];
+      .then(async (r) => {
+        const data = await r.json();
+        return { ok: r.ok, data, status: r.status } as const;
+      })
+      .then((out) => {
+        if (!out.ok) {
+          const msg = (out.data?.error as string) || (out.status === 401 ? "Please sign in to view PDFs." : "Failed to load PDFs.");
+          setError(msg);
+          setPdfs([]);
+          return;
+        }
+        const list = Array.isArray(out.data) ? out.data : [];
         setPdfs(list);
+        setError(null);
         if (list.length > 0 && !selectedUploadId) setSelectedUploadId(list[0].id);
       })
-      .catch(() => setPdfs([]));
+      .catch(() => {
+        setPdfs([]);
+        setError("Failed to load PDF list.");
+      });
   }, [selectedUploadId]);
 
   async function handleRun() {

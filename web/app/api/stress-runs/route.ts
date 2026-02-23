@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { getRequestUserId } from "@/lib/auth-guest";
 import { getStressRunsByUserId } from "@/lib/db";
 import { NextResponse } from "next/server";
 
@@ -6,10 +6,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const runs = await getStressRunsByUserId(user.id);
+    const userId = await getRequestUserId();
+    const runs = await getStressRunsByUserId(userId);
     return NextResponse.json(runs);
   } catch (e) {
     console.error(e);

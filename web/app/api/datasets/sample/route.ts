@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { getRequestUserId } from "@/lib/auth-guest";
 import { insertFinancialDataset } from "@/lib/db";
 import { NextResponse } from "next/server";
 
@@ -7,15 +7,9 @@ export const dynamic = "force-dynamic";
 /** Insert a sample financial dataset so users can run stress tests without uploading. */
 export async function POST() {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getRequestUserId();
 
-    const dataset = await insertFinancialDataset(user.id, {
+    const dataset = await insertFinancialDataset(userId, {
       upload_id: null,
       name: "Sample company (demo)",
       revenue: 100_000_000,

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getRequestUserId } from "@/lib/auth-guest";
 import { getUploadById, insertDisclosureAnalysis } from "@/lib/db";
 import { analyze10kWithOpenAI } from "@/lib/analyze-10k";
 
@@ -6,15 +7,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 export const runtime = "nodejs";
 
+function isBlobUrl(path: string): boolean {
+  return path.startsWith("http") && path.includes("blob.vercel-storage.com");
+}
+
 export async function POST(req: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getRequestUserId();
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -27,23 +26,44 @@ export async function POST(req: Request) {
       return Response.json({ error: "uploadId required" }, { status: 400 });
     }
 
-    const upload = await getUploadById(uploadId, user.id);
+    const upload = await getUploadById(uploadId, userId);
     if (!upload || upload.file_type !== "pdf") {
       return Response.json({ error: "PDF upload not found" }, { status: 404 });
     }
 
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from("uploads")
-      .download(upload.storage_path);
+    let buffer: Uint8Array;
+    if (isBlobUrl(upload.storage_path)) {
+      const res = await fetch(upload.storage_path);
+      if (!res.ok) {
+        return Response.json(
+          { error: "Failed to download file from storage" },
+          { status: 400 }
+        );
+      }
+      const ab = await res.arrayBuffer();
+      buffer = new Uint8Array(ab);
+    } else {
+      try {
+        const supabase = await createClient();
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from("uploads")
+          .download(upload.storage_path);
 
-    if (downloadError || !fileData) {
-      return Response.json(
-        { error: downloadError?.message ?? "Failed to download file" },
-        { status: 400 }
-      );
+        if (downloadError || !fileData) {
+          return Response.json(
+            { error: downloadError?.message ?? "Failed to download file" },
+            { status: 400 }
+          );
+        }
+        buffer = new Uint8Array(await fileData.arrayBuffer());
+      } catch {
+        return Response.json(
+          { error: "This file was uploaded with Supabase storage. Configure Supabase or re-upload the file." },
+          { status: 400 }
+        );
+      }
     }
 
-    const buffer = new Uint8Array(await fileData.arrayBuffer());
     const { PDFParse } = await import("pdf-parse");
     const parser = new PDFParse({ data: buffer });
     const textResult = await parser.getText();
@@ -60,7 +80,7 @@ export async function POST(req: Request) {
     const result = await analyze10kWithOpenAI(text, apiKey);
 
     const saved = await insertDisclosureAnalysis(
-      user.id,
+      userId,
       uploadId,
       upload.file_name,
       result.disclosureRiskScore,

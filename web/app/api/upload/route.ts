@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { getRequestUserId } from "@/lib/auth-guest";
 import { insertUpload, insertFinancialDataset } from "@/lib/db";
 import { NextResponse } from "next/server";
 
@@ -6,13 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getRequestUserId();
 
     const body = await req.json();
     const {
@@ -49,7 +43,7 @@ export async function POST(req: Request) {
     }
 
     const upload = await insertUpload(
-      user.id,
+      userId,
       file_name,
       file_type,
       storage_path,
@@ -59,7 +53,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to save upload" }, { status: 500 });
     }
 
-    const dataset = await insertFinancialDataset(user.id, {
+    const dataset = await insertFinancialDataset(userId, {
       upload_id: upload.id,
       name: name ?? file_name,
       revenue: revenue ?? null,

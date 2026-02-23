@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { getRequestUserId } from "@/lib/auth-guest";
 import { getDatasetsByUserId } from "@/lib/db";
 import { NextResponse } from "next/server";
 
@@ -6,14 +6,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const datasets = await getDatasetsByUserId(user.id);
+    const userId = await getRequestUserId();
+    const datasets = await getDatasetsByUserId(userId);
     return NextResponse.json(datasets);
   } catch (e) {
     console.error(e);

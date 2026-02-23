@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { getRequestUserId } from "@/lib/auth-guest";
 import { getPdfUploadsByUserId } from "@/lib/db";
 import { NextResponse } from "next/server";
 
@@ -6,17 +6,20 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getRequestUserId();
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type");
     if (type === "pdf") {
-      const list = await getPdfUploadsByUserId(user.id);
+      let list;
+      try {
+        list = await getPdfUploadsByUserId(userId);
+      } catch (e) {
+        console.error("Uploads API: getPdfUploadsByUserId failed", e);
+        return NextResponse.json(
+          { error: "Database unavailable. Add POSTGRES_URL or DATABASE_URL in Vercel." },
+          { status: 503 }
+        );
+      }
       return NextResponse.json(list);
     }
     return NextResponse.json([]);

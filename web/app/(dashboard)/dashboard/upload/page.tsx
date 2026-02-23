@@ -75,34 +75,48 @@ export default function UploadPage() {
     setSuccess(false);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated.");
-      const isPdf = file.name.toLowerCase().endsWith(".pdf");
-      const ext = isPdf ? "pdf" : "csv";
-      const path = `${user.id}/${crypto.randomUUID()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("uploads")
-        .upload(path, file, { upsert: false });
-      if (uploadError) throw uploadError;
 
-      let metrics: Record<string, number | null> = {};
-      if (!isPdf && file.type.includes("csv")) {
-        const text = await file.text();
-        metrics = parseCsvMetrics(text);
+      if (user) {
+        // Supabase: upload to storage then register in Postgres
+        const isPdf = file.name.toLowerCase().endsWith(".pdf");
+        const ext = isPdf ? "pdf" : "csv";
+        const path = `${user.id}/${crypto.randomUUID()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("uploads")
+          .upload(path, file, { upsert: false });
+        if (uploadError) throw uploadError;
+
+        let metrics: Record<string, number | null> = {};
+        if (!isPdf && file.type.includes("csv")) {
+          const text = await file.text();
+          metrics = parseCsvMetrics(text);
+        }
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            file_name: file.name,
+            file_type: ext,
+            storage_path: path,
+            file_size_bytes: file.size,
+            name: file.name.replace(/\.(csv|pdf)$/i, ""),
+            ...metrics,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to register dataset");
+      } else {
+        // Neon-only (no Supabase): send file to API, stored in Vercel Blob + Postgres
+        const formData = new FormData();
+        formData.set("file", file);
+        formData.set("name", file.name.replace(/\.(csv|pdf)$/i, ""));
+        const res = await fetch("/api/upload-file", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Upload failed");
       }
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          file_name: file.name,
-          file_type: ext,
-          storage_path: path,
-          file_size_bytes: file.size,
-          name: file.name.replace(/\.(csv|pdf)$/i, ""),
-          ...metrics,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to register dataset");
       setSuccess(true);
       setFile(null);
     } catch (e) {

@@ -1,6 +1,6 @@
 import React from "react";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { createClient } from "@/lib/supabase/server";
+import { getRequestUserId } from "@/lib/auth-guest";
 import {
   getDatasetById,
   getStressRunById,
@@ -139,29 +139,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const hasSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-    if (!hasSupabase) {
-      const element = React.createElement(ExecutiveReportDocument, { data: DEMO_PAYLOAD });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const buffer = await renderToBuffer(element as any);
-      const filename = `Executive-Risk-Brief-Demo-${new Date().toISOString().slice(0, 10)}.pdf`;
-      const pdfBytes = new Uint8Array(buffer as ArrayLike<number>);
-      return new Response(pdfBytes, {
-        status: 200,
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="${filename}"`,
-          "Content-Length": String(pdfBytes.length),
-        },
-      });
-    }
-
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
-    }
-
+    const userId = await getRequestUserId();
     const { stressRunId, disclosureId } = body;
 
     let stressRun = null;
@@ -170,19 +148,19 @@ export async function POST(req: Request) {
     let companyName = "Company";
 
     if (stressRunId) {
-      stressRun = await getStressRunById(stressRunId, user.id);
+      stressRun = await getStressRunById(stressRunId, userId);
       if (stressRun?.dataset_id) {
-        dataset = await getDatasetById(stressRun.dataset_id, user.id);
+        dataset = await getDatasetById(stressRun.dataset_id, userId);
       }
     }
     if (!dataset && stressRun?.dataset_id) {
-      dataset = await getDatasetById(stressRun.dataset_id, user.id);
+      dataset = await getDatasetById(stressRun.dataset_id, userId);
     }
     if (!dataset) {
-      const runs = await getStressRunsByUserId(user.id);
+      const runs = await getStressRunsByUserId(userId);
       if (runs[0]?.dataset_id) {
-        dataset = await getDatasetById(runs[0].dataset_id, user.id);
-        if (!stressRun && runs[0]) stressRun = await getStressRunById(runs[0].id, user.id);
+        dataset = await getDatasetById(runs[0].dataset_id, userId);
+        if (!stressRun && runs[0]) stressRun = await getStressRunById(runs[0].id, userId);
       }
     }
     if (dataset) {
@@ -190,12 +168,12 @@ export async function POST(req: Request) {
     }
 
     if (disclosureId) {
-      disclosure = await getDisclosureAnalysisById(disclosureId, user.id);
+      disclosure = await getDisclosureAnalysisById(disclosureId, userId);
     }
     if (!disclosure) {
-      const analyses = await getDisclosureAnalysesByUserId(user.id);
+      const analyses = await getDisclosureAnalysesByUserId(userId);
       if (analyses[0]) {
-        disclosure = await getDisclosureAnalysisById(analyses[0].id, user.id);
+        disclosure = await getDisclosureAnalysisById(analyses[0].id, userId);
       }
     }
 
