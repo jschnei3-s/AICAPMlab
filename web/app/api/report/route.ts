@@ -13,6 +13,7 @@ import ExecutiveReportDocument from "@/lib/ExecutiveReportDocument";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+export const runtime = "nodejs";
 
 function buildPayload(
   companyName: string,

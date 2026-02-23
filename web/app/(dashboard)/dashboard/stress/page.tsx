@@ -73,7 +73,9 @@ export default function StressPage() {
     if (datasets.length > 0 && !selectedDatasetId) setSelectedDatasetId(datasets[0].id);
   }, [datasets, selectedDatasetId]);
 
-  function handleRun() {
+  const isApiDataset = (id: string) => apiDatasets.some((d) => d.id === id);
+
+  async function handleRun() {
     if (!selectedDatasetId) {
       setError("Select a dataset.");
       return;
@@ -87,18 +89,29 @@ export default function StressPage() {
     setResults(null);
     setLoading(true);
     try {
-      const out = runStress(
-        {
-          revenue: dataset.revenue,
-          ebitda: dataset.ebitda,
-          debt: dataset.debt,
-          cash: dataset.cash,
-          equity: dataset.equity,
-          working_capital: null,
-        },
-        scenarioId
-      );
-      setResults(out);
+      if (isApiDataset(selectedDatasetId)) {
+        const res = await fetch("/api/stress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ datasetId: selectedDatasetId, scenarioId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Run failed");
+        setResults(data);
+      } else {
+        const out = runStress(
+          {
+            revenue: dataset.revenue,
+            ebitda: dataset.ebitda,
+            debt: dataset.debt,
+            cash: dataset.cash,
+            equity: dataset.equity,
+            working_capital: null,
+          },
+          scenarioId
+        );
+        setResults(out);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Run failed");
     } finally {
@@ -166,7 +179,7 @@ export default function StressPage() {
         </button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={handleAddSample}
@@ -174,7 +187,11 @@ export default function StressPage() {
         >
           Add sample dataset
         </button>
-        <span className="text-xs text-zinc-500">Runs locally without backend</span>
+        <span className="text-xs text-zinc-500">
+          {apiDatasets.length > 0
+            ? "Datasets from Upload are saved to the database; runs on them are persisted."
+            : "Sample datasets run locally. Upload CSV/PDF to create datasets saved to the database."}
+        </span>
       </div>
 
       {error && <p className="text-sm text-red-400">{error}</p>}

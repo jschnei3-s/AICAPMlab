@@ -4,6 +4,7 @@ import { analyze10kWithOpenAI } from "@/lib/analyze-10k";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {

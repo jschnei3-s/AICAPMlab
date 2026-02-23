@@ -1,3 +1,7 @@
+// Temporarily disabled: was causing MIDDLEWARE_INVOCATION_FAILED on Vercel Edge.
+// Root redirect is handled by app/page.tsx. Re-enable by renaming back to middleware.ts
+// if you need auth/session refresh in middleware later.
+
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
