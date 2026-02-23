@@ -33,6 +33,17 @@ AI-powered capital markets risk intelligence platform: upload financial data, ru
 - **UI**: **Reports** page: optional dropdowns for stress run and 10-K analysis → **Generate PDF report** → download `Executive-Risk-Brief-{Company}-{date}.pdf`.
 - **List APIs**: `GET /api/stress-runs` and `GET /api/disclosure-analyses` for the report form dropdowns.
 
+## Deploy on Vercel
+
+The Next.js app is in the **`web`** folder. To fix **404 NOT_FOUND**:
+
+1. Open your project on [Vercel](https://vercel.com).
+2. Go to **Settings** → **General**.
+3. Under **Root Directory**, click **Edit**, set it to **`web`**, and save.
+4. Redeploy (e.g. **Deployments** → ⋮ on latest → **Redeploy**).
+
+Vercel will then build and run from `web/` (where `package.json` and the Next.js app live).
+
 ## Setup
 
 ### 1. Supabase (Auth + file storage)
