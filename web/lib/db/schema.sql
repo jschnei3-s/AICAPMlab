@@ -56,3 +56,23 @@ create index if not exists idx_uploads_user_id on uploads(user_id);
 create index if not exists idx_financial_datasets_user_id on financial_datasets(user_id);
 create index if not exists idx_stress_runs_user_id on stress_runs(user_id);
 create index if not exists idx_disclosure_analyses_user_id on disclosure_analyses(user_id);
+
+-- Neon auth (no Supabase): users + sessions
+create table if not exists users (
+  id uuid primary key default uuid_generate_v4(),
+  email text not null unique,
+  password_hash text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists sessions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references users(id) on delete cascade,
+  token text not null unique,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_sessions_token on sessions(token);
+create index if not exists idx_sessions_user_id on sessions(user_id);
+create index if not exists idx_sessions_expires_at on sessions(expires_at);

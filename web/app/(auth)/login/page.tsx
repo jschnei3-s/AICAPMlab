@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const isConfigured = SUPABASE_URL && SUPABASE_URL !== "https://placeholder.supabase.co";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,7 +10,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
     const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -28,27 +23,20 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        const msg = signInError.message;
-        setError(
-          /invalid|api key|configuration|fetch|network/i.test(msg)
-            ? "Sign-in failed. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel, and add this site’s URL in Supabase → Authentication → URL Configuration."
-            : msg
-        );
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Sign-in failed");
         return;
       }
-      router.push("/dashboard");
+      router.push(data.redirect ?? "/dashboard");
       router.refresh();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Sign-in failed.";
-      setError(message);
-      // Hint for common deployment misconfiguration
-      if (/invalid|api key|fetch|network|failed to fetch/i.test(message)) {
-        setError(
-          "Sign-in failed. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel, and add this site’s URL in Supabase → Authentication → URL Configuration."
-        );
-      }
+      setError(err instanceof Error ? err.message : "Sign-in failed");
     } finally {
       setLoading(false);
     }
@@ -65,15 +53,6 @@ export default function LoginPage() {
             Risk intelligence platform
           </p>
         </div>
-        {!isConfigured && (
-          <div className="mb-4 rounded-lg border border-zinc-600 bg-zinc-800/50 px-4 py-3 text-sm text-zinc-300">
-            <p className="font-medium text-zinc-100">Using Neon (no Supabase)</p>
-            <p className="mt-1">You can use the app as a guest. Data is stored in Vercel Postgres/Neon. Use the link below to go to the dashboard.</p>
-            <Link href="/dashboard" className="mt-3 inline-block rounded bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200">
-              Go to dashboard
-            </Link>
-          </div>
-        )}
         <form
           onSubmit={handleSubmit}
           className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6 shadow-xl"

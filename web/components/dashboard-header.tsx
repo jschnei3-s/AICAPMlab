@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export function DashboardHeader({ userEmail, isGuest }: { userEmail: string; isGuest?: boolean }) {
   const router = useRouter();
 
   async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/dashboard");
-    router.refresh();
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      router.push("/dashboard");
+      router.refresh();
+    }
   }
 
   return (

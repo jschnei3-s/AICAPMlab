@@ -13,9 +13,12 @@ export function isSupabaseConfigured(): boolean {
 
 /**
  * Returns the current user ID for API routes.
- * When Supabase is not configured, returns GUEST_USER_ID so the app works with Neon only.
+ * Uses Neon session first (if logged in), then Supabase if configured, else guest.
  */
 export async function getRequestUserId(): Promise<string> {
+  const { getNeonUserId } = await import("@/lib/auth-neon");
+  const neonId = await getNeonUserId();
+  if (neonId) return neonId;
   if (!isSupabaseConfigured()) {
     return GUEST_USER_ID;
   }

@@ -64,48 +64,10 @@ export async function POST(req: Request) {
       }
     }
 
-    // pdf-parse (pdf.js) expects DOMMatrix in Node; polyfill for serverless
-    if (typeof globalThis.DOMMatrix === "undefined") {
-      (globalThis as unknown as { DOMMatrix: unknown }).DOMMatrix = class DOMMatrix {
-        a = 1;
-        b = 0;
-        c = 0;
-        d = 1;
-        e = 0;
-        f = 0;
-        constructor(init?: string | number[]) {
-          if (typeof init === "string" && init.startsWith("matrix(")) {
-            const m = init.replace(/matrix\(|\)/g, "").split(/,\s*/).map(Number);
-            if (m.length >= 6) {
-              this.a = m[0]; this.b = m[1]; this.c = m[2]; this.d = m[3]; this.e = m[4]; this.f = m[5];
-            }
-          } else if (Array.isArray(init) && init.length >= 6) {
-            this.a = init[0]; this.b = init[1]; this.c = init[2]; this.d = init[3]; this.e = init[4]; this.f = init[5];
-          }
-        }
-        toString() {
-          return `matrix(${this.a},${this.b},${this.c},${this.d},${this.e},${this.f})`;
-        }
-        multiply() {
-          return this;
-        }
-        translate() {
-          return this;
-        }
-        scale() {
-          return this;
-        }
-        invertSelf() {
-          return this;
-        }
-      };
-    }
-
-    const { PDFParse } = await import("pdf-parse");
-    const parser = new PDFParse({ data: buffer });
-    const textResult = await parser.getText();
-    const text = textResult.text ?? "";
-    await parser.destroy();
+    // unpdf is serverless-friendly (no worker); pdf-parse/pdfjs-dist worker fails on Vercel
+    const { extractText } = await import("unpdf");
+    const { text: extracted } = await extractText(buffer, { mergePages: true });
+    const text = extracted ?? "";
 
     if (!text || text.trim().length < 100) {
       return Response.json(

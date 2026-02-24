@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
@@ -10,23 +9,30 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setMessage(null);
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Sign up failed");
+        return;
+      }
+      router.push(data.redirect ?? "/dashboard");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign up failed");
+    } finally {
+      setLoading(false);
     }
-    setMessage("Check your email for the confirmation link.");
-    router.refresh();
   }
 
   return (
@@ -77,9 +83,6 @@ export default function SignUpPage() {
           </div>
           {error && (
             <p className="mt-3 text-xs text-red-400">{error}</p>
-          )}
-          {message && (
-            <p className="mt-3 text-xs text-emerald-400">{message}</p>
           )}
           <button
             type="submit"
