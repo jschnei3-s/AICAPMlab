@@ -80,10 +80,11 @@ export async function createSession(userId: string): Promise<string | null> {
   const token = crypto.randomUUID();
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + SESSION_DAYS);
+  const expiresAtStr = expiresAt.toISOString();
   try {
     await sql`
       insert into sessions (user_id, token, expires_at)
-      values (${userId}, ${token}, ${expiresAt})
+      values (${userId}, ${token}, ${expiresAtStr})
     `;
     return token;
   } catch {
