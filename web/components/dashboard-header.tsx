@@ -18,18 +18,18 @@ export function DashboardHeader({ userEmail, isGuest }: { userEmail: string; isG
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-zinc-800 bg-zinc-900/30 px-6">
-      <div className="text-sm text-zinc-500">
-        Capital Markets AI Lab
+    <header className="flex h-14 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)]/60 px-6">
+      <div className="text-sm font-medium text-[var(--muted)]">
+        Risk Intelligence
       </div>
       <div className="flex items-center gap-4">
-        <span className="text-xs text-zinc-500 truncate max-w-[180px]">
+        <span className="max-w-[200px] truncate text-xs text-[var(--muted)]" title={userEmail}>
           {userEmail}
         </span>
         {isGuest ? (
           <Link
             href="/login"
-            className="rounded border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
+            className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition hover:bg-[var(--surface-elevated)] hover:text-[var(--foreground)]"
           >
             Sign in
           </Link>
@@ -37,7 +37,7 @@ export function DashboardHeader({ userEmail, isGuest }: { userEmail: string; isG
           <button
             type="button"
             onClick={handleSignOut}
-            className="rounded border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
+            className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition hover:bg-[var(--surface-elevated)] hover:text-[var(--foreground)]"
           >
             Sign out
           </button>

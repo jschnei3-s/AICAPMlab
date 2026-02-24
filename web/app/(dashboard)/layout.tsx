@@ -14,7 +14,7 @@ export default async function DashboardLayout({
   const isGuest = !sessionUser;
 
   return (
-    <div className="flex min-h-screen bg-[#0c0c0d] text-zinc-100">
+    <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <DashboardSidebar />
       <div className="flex flex-1 flex-col min-w-0">
         <DashboardHeader userEmail={userEmail} isGuest={isGuest} />

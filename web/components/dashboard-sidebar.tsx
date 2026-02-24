@@ -15,9 +15,12 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-56 flex-col border-r border-zinc-800 bg-zinc-900/30">
-      <div className="flex h-14 items-center border-b border-zinc-800 px-4">
-        <Link href="/dashboard" className="font-semibold tracking-tight text-zinc-100">
+    <aside className="flex w-56 flex-col border-r border-[var(--border)] bg-[var(--surface)]/80">
+      <div className="flex h-14 items-center border-b border-[var(--border)] px-4">
+        <Link
+          href="/dashboard"
+          className="font-semibold tracking-tight text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
+        >
           CM AI Lab
         </Link>
       </div>
@@ -28,10 +31,10 @@ export function DashboardSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`block rounded-md px-3 py-2 text-sm transition-colors ${
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-zinc-800 text-zinc-100"
-                  : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+                  ? "bg-[var(--accent)]/15 text-[var(--accent)]"
+                  : "text-[var(--muted)] hover:bg-[var(--surface-elevated)]/80 hover:text-[var(--foreground)]"
               }`}
             >
               {item.label}

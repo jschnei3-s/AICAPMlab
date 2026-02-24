@@ -61,7 +61,7 @@ type StressResults = {
   fragilityScore: number;
 };
 
-const CHART_COLORS = { baseline: "#71717a", stressed: "#f43f5e" };
+const CHART_COLORS = { baseline: "#94a3b8", stressed: "#e5b84b" };
 
 const DEFAULT_SAMPLE: Dataset = {
   id: "sample-1",
@@ -202,44 +202,44 @@ export default function StressPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-zinc-100">Stress tests</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-lg font-semibold text-[var(--foreground)]">Stress tests</h1>
+        <p className="mt-1 text-sm text-[var(--muted)]">
           Run interest rate, revenue, and liquidity stress scenarios.
         </p>
       </div>
 
-      <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+      <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)]/60 p-4">
         <div className="flex flex-wrap items-center gap-4">
-          <span className="text-xs text-zinc-500">Input source</span>
-          <label className="flex items-center gap-2 cursor-pointer">
+          <span className="text-xs text-[var(--muted)]">Input source</span>
+          <label className="flex cursor-pointer items-center gap-2">
             <input
               type="radio"
               name="inputMode"
               checked={inputMode === "dataset"}
               onChange={() => setInputMode("dataset")}
-              className="rounded-full border-zinc-600 text-zinc-100"
+              className="rounded-full border-[var(--border)] text-[var(--accent)]"
             />
-            <span className="text-sm text-zinc-300">Saved dataset</span>
+            <span className="text-sm text-[var(--muted)]">Saved dataset</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex cursor-pointer items-center gap-2">
             <input
               type="radio"
               name="inputMode"
               checked={inputMode === "manual"}
               onChange={() => setInputMode("manual")}
-              className="rounded-full border-zinc-600 text-zinc-100"
+              className="rounded-full border-[var(--border)] text-[var(--accent)]"
             />
-            <span className="text-sm text-zinc-300">Manual company</span>
+            <span className="text-sm text-[var(--muted)]">Manual company</span>
           </label>
         </div>
 
         {inputMode === "dataset" && (
           <div>
-            <label className="block text-xs text-zinc-500">Dataset</label>
+            <label className="block text-xs text-[var(--muted)]">Dataset</label>
             <select
               value={selectedDatasetId}
               onChange={(e) => setSelectedDatasetId(e.target.value)}
-              className="mt-1 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+              className="mt-1 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)]"
             >
               <option value="">Select dataset</option>
               {datasets.map((d) => (
@@ -264,7 +264,7 @@ export default function StressPage() {
               { key: "monthlyBurn", label: "Monthly burn ($)", scale: 1, optional: true },
             ].map(({ key, label, scale, optional }) => (
               <div key={key}>
-                <label className="block text-xs text-zinc-500">
+                <label className="block text-xs text-[var(--muted)]">
                   {label}
                   {optional && " (optional)"}
                 </label>
@@ -278,7 +278,7 @@ export default function StressPage() {
                     setManual((m) => ({ ...m, [key]: next }));
                   }}
                   placeholder={optional ? "Auto" : undefined}
-                  className="mt-1 w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500"
+                  className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)]"
                 />
               </div>
             ))}
@@ -286,11 +286,11 @@ export default function StressPage() {
         )}
 
         <div>
-          <label className="block text-xs text-zinc-500">Scenario</label>
+          <label className="block text-xs text-[var(--muted)]">Scenario</label>
           <select
             value={scenarioId}
             onChange={(e) => setScenarioId(e.target.value as ScenarioId)}
-            className="mt-1 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100"
+            className="mt-1 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)]"
           >
             {SCENARIOS.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
@@ -298,12 +298,12 @@ export default function StressPage() {
           </select>
         </div>
 
-        <div className="border-t border-zinc-700 pt-3">
-          <span className="block text-xs text-zinc-500 mb-2">Scenario parameters (edit to customize)</span>
+        <div className="border-t border-[var(--border)] pt-3">
+          <span className="mb-2 block text-xs text-[var(--muted)]">Scenario parameters (edit to customize)</span>
           <div className="flex flex-wrap gap-4">
             {(scenarioId === "interest_rate_200bps" || scenarioId === "credit_spread_widening") && (
               <div>
-                <label className="block text-xs text-zinc-500">
+                <label className="block text-xs text-[var(--muted)]">
                   {scenarioId === "interest_rate_200bps" ? "Rate increase (bps)" : "Spread add (bps)"}
                 </label>
                 <input
@@ -316,13 +316,13 @@ export default function StressPage() {
                     if (scenarioId === "interest_rate_200bps") setOverrides((o) => ({ ...o, interestRateBps: Number.isFinite(v) ? v : undefined }));
                     else setOverrides((o) => ({ ...o, creditSpreadBps: Number.isFinite(v) ? v : undefined }));
                   }}
-                  className="mt-1 w-24 rounded border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-100"
+                  className="mt-1 w-24 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-2 py-1.5 text-sm text-[var(--foreground)]"
                 />
               </div>
             )}
             {scenarioId === "revenue_down_20" && (
               <div>
-                <label className="block text-xs text-zinc-500">Revenue decline (%)</label>
+                <label className="block text-xs text-[var(--muted)]">Revenue decline (%)</label>
                 <input
                   type="number"
                   min={0}
@@ -330,33 +330,33 @@ export default function StressPage() {
                   step={5}
                   value={overrides.revenueDownPct ?? 20}
                   onChange={(e) => setOverrides((o) => ({ ...o, revenueDownPct: Number(e.target.value) }))}
-                  className="mt-1 w-24 rounded border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-100"
+                  className="mt-1 w-24 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-2 py-1.5 text-sm text-[var(--foreground)]"
                 />
               </div>
             )}
             {scenarioId === "liquidity_freeze" && (
               <div>
-                <label className="block text-xs text-zinc-500">Burn multiplier</label>
+                <label className="block text-xs text-[var(--muted)]">Burn multiplier</label>
                 <input
                   type="number"
                   min={0.1}
                   step={0.1}
                   value={overrides.liquidityBurnMultiplier ?? 1.5}
                   onChange={(e) => setOverrides((o) => ({ ...o, liquidityBurnMultiplier: Number(e.target.value) }))}
-                  className="mt-1 w-24 rounded border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-100"
+                  className="mt-1 w-24 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-2 py-1.5 text-sm text-[var(--foreground)]"
                 />
               </div>
             )}
             {scenarioId === "volatility_spike" && (
               <div>
-                <label className="block text-xs text-zinc-500">Volatility multiplier</label>
+                <label className="block text-xs text-[var(--muted)]">Volatility multiplier</label>
                 <input
                   type="number"
                   min={0.1}
                   step={0.1}
                   value={overrides.volatilityMultiplier ?? 1.5}
                   onChange={(e) => setOverrides((o) => ({ ...o, volatilityMultiplier: Number(e.target.value) }))}
-                  className="mt-1 w-24 rounded border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-100"
+                  className="mt-1 w-24 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-2 py-1.5 text-sm text-[var(--foreground)]"
                 />
               </div>
             )}
@@ -367,7 +367,7 @@ export default function StressPage() {
           <button
             onClick={handleRun}
             disabled={loading || (inputMode === "dataset" && !selectedDatasetId)}
-            className="rounded bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 disabled:opacity-50"
+            className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent-foreground)] hover:opacity-90 disabled:opacity-50"
           >
             {loading ? "Running…" : "Run stress test"}
           </button>
@@ -378,26 +378,26 @@ export default function StressPage() {
         <button
           type="button"
           onClick={handleAddSample}
-          className="rounded border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+          className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm text-[var(--muted)] hover:bg-[var(--surface-elevated)] hover:text-[var(--foreground)]"
         >
           Add sample dataset
         </button>
-        <span className="text-xs text-zinc-500">
+        <span className="text-xs text-[var(--muted)]">
           {apiDatasets.length > 0
             ? "Datasets from Upload are saved to the database; runs on them are persisted."
             : "Sample datasets run locally. Upload CSV/PDF to create datasets saved to the database."}
         </span>
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
 
       {results && (
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <span className="text-sm text-zinc-400">Fragility score</span>
+            <span className="text-sm text-[var(--muted)]">Fragility score</span>
             <span
               className={`text-2xl font-semibold ${
-                results.fragilityScore >= 70 ? "text-red-400" : results.fragilityScore >= 50 ? "text-amber-400" : "text-zinc-300"
+                results.fragilityScore >= 70 ? "text-[var(--danger)]" : results.fragilityScore >= 50 ? "text-[var(--warning)]" : "text-[var(--foreground)]"
               }`}
             >
               {results.fragilityScore}/100
@@ -405,7 +405,7 @@ export default function StressPage() {
           </div>
 
           <div>
-            <h2 className="text-sm font-medium text-zinc-400 mb-2">Risk heatmap</h2>
+            <h2 className="mb-2 text-sm font-medium text-[var(--muted)]">Risk heatmap</h2>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -413,11 +413,11 @@ export default function StressPage() {
                   margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
                   layout="vertical"
                 >
-                  <XAxis type="number" stroke="#71717a" fontSize={11} />
-                  <YAxis type="category" dataKey="metric" stroke="#71717a" fontSize={11} width={120} />
+                  <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                  <YAxis type="category" dataKey="metric" stroke="#94a3b8" fontSize={11} width={120} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#27272a", border: "1px solid #52525b" }}
-                    labelStyle={{ color: "#a1a1aa" }}
+                    contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155" }}
+                    labelStyle={{ color: "#f1f5f9" }}
                   />
                   <Bar dataKey="baseline" fill={CHART_COLORS.baseline} name="Baseline" radius={[0, 2, 2, 0]} />
                   <Bar dataKey="stressed" fill={CHART_COLORS.stressed} name="Stressed" radius={[0, 2, 2, 0]} />
@@ -427,15 +427,15 @@ export default function StressPage() {
           </div>
 
           <div>
-            <h2 className="text-sm font-medium text-zinc-400 mb-2">Capital ratio (projected)</h2>
+            <h2 className="mb-2 text-sm font-medium text-[var(--muted)]">Capital ratio (projected)</h2>
             <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={results.capitalDeterioration} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-                  <XAxis dataKey="month" stroke="#71717a" fontSize={11} />
-                  <YAxis stroke="#71717a" fontSize={11} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#27272a", border: "1px solid #52525b" }}
+                    contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155" }}
                     formatter={(v: number | undefined) => [`${((v ?? 0) * 100).toFixed(1)}%`, "Ratio"]}
                     labelFormatter={(m) => `Month ${m}`}
                   />
@@ -446,15 +446,15 @@ export default function StressPage() {
           </div>
 
           <div>
-            <h2 className="text-sm font-medium text-zinc-400 mb-2">Liquidity runway</h2>
+            <h2 className="mb-2 text-sm font-medium text-[var(--muted)]">Liquidity runway</h2>
             <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={results.liquidityBurn} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-                  <XAxis dataKey="month" stroke="#71717a" fontSize={11} />
-                  <YAxis stroke="#71717a" fontSize={11} tickFormatter={(v) => `$${(v / 1e6).toFixed(1)}M`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `$${(v / 1e6).toFixed(1)}M`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#27272a", border: "1px solid #52525b" }}
+                    contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155" }}
                     formatter={(v: number | undefined) => [`$${((v ?? 0) / 1e6).toFixed(2)}M`, "Cash"]}
                     labelFormatter={(m) => `Month ${m}`}
                   />
