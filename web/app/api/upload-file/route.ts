@@ -15,7 +15,10 @@ export async function POST(req: Request) {
   try {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return NextResponse.json(
-        { error: "File storage not configured. Add BLOB_READ_WRITE_TOKEN in Vercel (Storage → Blob)." },
+        {
+          error:
+            "File storage not configured. In Vercel: go to your project → Storage → open your Blob store → use \"Connect to Project\" so BLOB_READ_WRITE_TOKEN is added. If it’s already connected, go to Settings → Environment Variables and add BLOB_READ_WRITE_TOKEN for Production, then redeploy.",
+        },
         { status: 503 }
       );
     }
