@@ -36,6 +36,20 @@ export type FinancialInputs = {
   monthlyBurn?: number | null;
 };
 
+/** Optional overrides for scenario shock parameters (user-defined). */
+export type ScenarioOverrides = {
+  /** Interest rate increase in bps (e.g. 200 = +2%). Default 200. */
+  interestRateBps?: number;
+  /** Revenue decline in % (e.g. 20 = -20%). Default 20. */
+  revenueDownPct?: number;
+  /** Credit spread add in bps (e.g. 150 = +1.5%). Default 150. */
+  creditSpreadBps?: number;
+  /** Liquidity burn multiplier (e.g. 1.5). Default 1.5. */
+  liquidityBurnMultiplier?: number;
+  /** Volatility multiplier (e.g. 1.5). Default 1.5. */
+  volatilityMultiplier?: number;
+};
+
 export type StressResults = {
   scenarioId: ScenarioId;
   scenarioName: string;
@@ -99,11 +113,21 @@ function monteCarloVar95(
   return Math.max(0, initialEquity - varLevel);
 }
 
+const DEFAULT_OVERRIDES: Required<ScenarioOverrides> = {
+  interestRateBps: 200,
+  revenueDownPct: 20,
+  creditSpreadBps: 150,
+  liquidityBurnMultiplier: 1.5,
+  volatilityMultiplier: 1.5,
+};
+
 export function runStress(
   inputs: FinancialInputs,
-  scenarioId: ScenarioId
+  scenarioId: ScenarioId,
+  overrides?: ScenarioOverrides | null
 ): StressResults {
   const scenario = SCENARIOS.find((s) => s.id === scenarioId)!;
+  const o = { ...DEFAULT_OVERRIDES, ...overrides };
   const rate = inputs.interestRate ?? DEFAULT_RATE;
   const debt = nz(inputs.debt);
   const equity = nz(inputs.equity);
@@ -127,26 +151,33 @@ export function runStress(
   let stressedRevenue = revenue;
   let stressedRate = rate;
   let stressedVolatility = baseVolatility;
-  let liquidityMultiplier = 1; // runoff speed
+  let liquidityMultiplier = 1;
 
   switch (scenarioId) {
-    case "interest_rate_200bps":
-      stressedRate = rate + 0.02;
+    case "interest_rate_200bps": {
+      const addBps = Number.isFinite(o.interestRateBps) ? o.interestRateBps : 200;
+      stressedRate = rate + addBps / 10000;
       stressedInterestExpense = debt * stressedRate;
       break;
-    case "revenue_down_20":
-      stressedRevenue = revenue * 0.8;
-      stressedEbitda = ebitda * 0.8; // simplified
+    }
+    case "revenue_down_20": {
+      const pct = Number.isFinite(o.revenueDownPct) ? Math.min(100, Math.max(0, o.revenueDownPct)) : 20;
+      const factor = 1 - pct / 100;
+      stressedRevenue = revenue * factor;
+      stressedEbitda = ebitda * factor;
       break;
+    }
     case "liquidity_freeze":
-      liquidityMultiplier = 1.5; // burn faster
+      liquidityMultiplier = Number.isFinite(o.liquidityBurnMultiplier) && o.liquidityBurnMultiplier > 0 ? o.liquidityBurnMultiplier : 1.5;
       break;
-    case "credit_spread_widening":
-      stressedRate = rate + 0.015;
+    case "credit_spread_widening": {
+      const addBps = Number.isFinite(o.creditSpreadBps) ? o.creditSpreadBps : 150;
+      stressedRate = rate + addBps / 10000;
       stressedInterestExpense = debt * stressedRate;
       break;
+    }
     case "volatility_spike":
-      stressedVolatility = baseVolatility * 1.5;
+      stressedVolatility = baseVolatility * (Number.isFinite(o.volatilityMultiplier) && o.volatilityMultiplier > 0 ? o.volatilityMultiplier : 1.5);
       break;
   }
 

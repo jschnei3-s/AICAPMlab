@@ -1,6 +1,6 @@
 import { getRequestUserId } from "@/lib/auth-guest";
 import { getDatasetById, insertStressRun } from "@/lib/db";
-import { runStress, type ScenarioId } from "@/lib/stress-engine";
+import { runStress, type ScenarioId, type ScenarioOverrides } from "@/lib/stress-engine";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -8,8 +8,12 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   try {
     const userId = await getRequestUserId();
-    const body = await req.json().catch(() => ({})) as { datasetId?: string; scenarioId?: ScenarioId };
-    const { datasetId, scenarioId } = body;
+    const body = await req.json().catch(() => ({})) as {
+      datasetId?: string;
+      scenarioId?: ScenarioId;
+      overrides?: ScenarioOverrides;
+    };
+    const { datasetId, scenarioId, overrides } = body;
 
     if (!datasetId || !scenarioId) {
       return NextResponse.json(
@@ -42,7 +46,7 @@ export async function POST(req: Request) {
       equity: dataset.equity,
       working_capital: dataset.working_capital,
     };
-    const results = runStress(inputs, scenarioId);
+    const results = runStress(inputs, scenarioId, overrides ?? undefined);
 
     await insertStressRun(
       userId,

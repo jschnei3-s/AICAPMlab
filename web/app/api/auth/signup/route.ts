@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createUser, getUserByEmail, createSession, SESSION_COOKIE_NAME } from "@/lib/auth-neon";
+import { createUser, getUserByEmail, createSession, hasDb, SESSION_COOKIE_NAME } from "@/lib/auth-neon";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,13 @@ function setSessionCookie(token: string): string {
 
 export async function POST(req: Request) {
   try {
+    if (!hasDb()) {
+      return NextResponse.json(
+        { error: "Database not configured. Add POSTGRES_URL or DATABASE_URL in Vercel." },
+        { status: 503 }
+      );
+    }
+
     const body = await req.json().catch(() => ({})) as { email?: string; password?: string };
     const { email, password } = body;
     if (!email || !password || typeof email !== "string" || typeof password !== "string") {
@@ -29,12 +36,18 @@ export async function POST(req: Request) {
 
     const user = await createUser(trimmedEmail, password);
     if (!user) {
-      return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Could not create account. In Neon SQL, run the schema that creates the users and sessions tables (see web/lib/db/schema.sql)." },
+        { status: 500 }
+      );
     }
 
     const token = await createSession(user.id);
     if (!token) {
-      return NextResponse.json({ error: "Account created but failed to sign in" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Account created but could not sign in. Ensure the sessions table exists in Neon (see schema.sql)." },
+        { status: 500 }
+      );
     }
 
     const res = NextResponse.json({ ok: true, redirect: "/dashboard" });
@@ -42,6 +55,13 @@ export async function POST(req: Request) {
     return res;
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: "Sign up failed" }, { status: 500 });
+    const msg = e instanceof Error ? e.message : "";
+    const hint = /relation|does not exist|undefined table/i.test(msg)
+      ? " Run the users and sessions schema in Neon (web/lib/db/schema.sql)."
+      : "";
+    return NextResponse.json(
+      { error: `Sign up failed.${hint}` },
+      { status: 500 }
+    );
   }
 }
